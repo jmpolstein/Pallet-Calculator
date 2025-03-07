@@ -243,19 +243,59 @@ def main():
                 overhang, max_stack_height, box_dims
             )
             
+            # Calculate pallet utilization
+            # 1. Calculate box volume
+            box_volume = box_length * box_width * box_height
+            
+            # 2. Define effective dimensions with overhang
+            effective_length = pallet_length + 2 * overhang
+            effective_width = pallet_width + 2 * overhang
+            
+            # 3. Calculate available height for stacking
+            available_height = max_stack_height - pallet_height
+            
+            # 4. Get total number of boxes
+            total_boxes = result['total_boxes']
+            
+            # 5. Compute available and utilized volumes
+            available_volume = effective_length * effective_width * available_height
+            utilized_volume = total_boxes * box_volume
+            
+            # 6. Calculate utilization percentage
+            if available_height > 0 and effective_length > 0 and effective_width > 0:
+                utilization_percentage = (utilized_volume / available_volume) * 100
+            else:
+                utilization_percentage = 0
+            
             # Display results in an expandable section
             with st.expander("Optimization Results", expanded=True):
-                col1, col2 = st.columns(2)
+                col1, col2, col3 = st.columns(3)
                 
                 with col1:
                     st.metric("Total Boxes", result['total_boxes'])
                     st.metric("Boxes per Layer", result['boxes_along_length'] * result['boxes_along_width'])
-                    st.metric("Layers", result['layers'])
                 
                 with col2:
+                    st.metric("Layers", result['layers'])
+                    st.metric("Pallet Utilization (%)", f"{utilization_percentage:.2f}")
+                
+                with col3:
                     st.write("**Orientation:**", result['orientation'])
                     st.write("**Boxes along Length:**", result['boxes_along_length'])
                     st.write("**Boxes along Width:**", result['boxes_along_width'])
+                
+                # Additional utilization details
+                st.write("---")
+                st.write("**Utilization Details:**")
+                details_col1, details_col2 = st.columns(2)
+                
+                with details_col1:
+                    st.write(f"• Box Volume: {box_volume:.2f} cubic inches")
+                    st.write(f"• Total Box Volume: {utilized_volume:.2f} cubic inches")
+                
+                with details_col2:
+                    st.write(f"• Available Volume: {available_volume:.2f} cubic inches")
+                    st.write(f"• Effective Dimensions: {effective_length:.1f}\" × {effective_width:.1f}\" × {available_height:.1f}\"")
             
             # Extract box dimensions for visualization
             orientation = result['orientation']
@@ -292,5 +332,4 @@ def main():
                 st.pyplot(fig_2d)
 
 if __name__ == "__main__":
-    main()
-    
+    main() 
